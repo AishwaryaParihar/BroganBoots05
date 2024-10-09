@@ -16,7 +16,7 @@ app.use(
     credentials: true,
   })
 );
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // app.use(cors({
 //   origin: process.env.FRONTEND_URL,
 //   credentials: true
