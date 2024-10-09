@@ -44,6 +44,7 @@ const paymentStatus = require("../controller/payment/payment-status");
 
 const contactusController = require("../controller/user/contactus");
 const contactDetailDisplay = require("../controller/user/contactusDetail");
+const getTransaction = require("../controller/payment/getTranstactDetails");
 
 router.post("/signup", userSignUpController);
 router.post("/signin", userSignInController);
@@ -54,7 +55,7 @@ router.get("/contact-details", contactDetailDisplay);
 
 router.post('/order', phonePePayment)
 router.post('/status', authToken, paymentStatus)
-
+router.get('/order', getTransaction)
 //admin panel
 
 router.get("/all-user", authToken, allUsers);
