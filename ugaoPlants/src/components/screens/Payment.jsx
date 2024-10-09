@@ -1,186 +1,339 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
+import Context from '../../context';
+import SummaryApi from '../../common/Index';
+import displayINRCurrency from '../../helper/displayCurrency';
+import { incremented, decremented } from '../../store/CounterSlice'; // Make sure you import these actions
 
 const Payment = () => {
-
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const context2 = useContext(Context);
+    const dispatch = useDispatch();
+    const countProduct = useSelector((state) => state.counter.value);
+  
+    const fetchData = async () => {
+      const response = await fetch(SummaryApi.addToCartProductView.url, {
+        method: SummaryApi.addToCartProductView.method,
+        credentials: "include",
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+  
+      const responseData = await response.json();
+  
+      if (responseData.success) {
+        setData(responseData.data);
+      }
+    };
+  
+    const handleLoading = async () => {
+      setLoading(true);
+      await fetchData();
+      setLoading(false);
+    };
+  
+    useEffect(() => {
+      handleLoading();
+    }, []);
+  
+    const increaseQty = async (id) => {
+      dispatch(incremented(id));
+      const response = await fetch(SummaryApi.updateCartProduct.url, {
+        method: SummaryApi.updateCartProduct.method,
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ _id: id, quantity: countProduct + 1 }),
+      });
+      const responseData = await response.json();
+      if (responseData.success) {
+        fetchData();
+      }
+    };
+  
+    const decreaseQty = async (id, currentQty) => {
+      if (currentQty > 1) {
+        dispatch(decremented(id));
+        const response = await fetch(SummaryApi.updateCartProduct.url, {
+          method: SummaryApi.updateCartProduct.method,
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ _id: id, quantity: currentQty - 1 }),
+        });
+        const responseData = await response.json();
+        if (responseData.success) {
+          fetchData();
+        }
+      }
+    };
+  
+    const deleteCartProduct = async (id) => {
+      const response = await fetch(SummaryApi.deleteCartProduct.url, {
+        method: SummaryApi.deleteCartProduct.method,
+        credentials: "include",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ _id: id }),
+      });
+  
+      const responseData = await response.json();
+  
+      if (responseData.success) {
+        fetchData();
+        context2.fetchUserAddToCart();
+      }
+    };
+  
+    const totalQty = data.reduce((previousValue, currentValue) => previousValue + currentValue.quantity, 0);
+    const totalPrice = data.reduce((preve, curr) => preve + curr.quantity * curr?.productId?.sellingPrice, 0);
+  
     const navigate = useNavigate();
 
-    const data = {
-        name: "Vikas",
-        amount: 1,
-        number: "9999999999",
-        MUID: "MUID" + Date.now(),
-        transactionId: "T" + Date.now(),
+    // State for form fields
+    const [formData, setFormData] = useState({
+        fullName: "",
+        phoneNumber: "",
+        email: "",
+        address: "",
+        city: "",
+        state: "",
+        pinCode: "",
+        paymentMethod: "online",  // default as online or cod
+    });
+
+    // Handle input change and set to state
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({
+            ...formData,
+            [name]: value,
+        });
     };
 
     const handlePayment = async (e) => {
         e.preventDefault();
 
-        let res = await axios.post("http://localhost:8081/api/order", { ...data })
-            .then((res) => {
-                window.location.href = res.data.url
-                if (res.data && res.data.data.instrumentResponse.redirectInfo.url) {
-                    window.location.href =
-                        res.data.data.instrumentResponse.redirectInfo.url;
-                }
-            })
+        const data = {
+            ...formData,
+            amount: totalPrice,  // Use the total calculated price
+            items: data.map(product => ({
+                productName: product.productId.productName,
+                qty: product.quantity,
+                price: product.productId.sellingPrice
+            })),  // Create item details based on actual products
+            MUID: "MUID" + Date.now(),
+            transactionId: "T" + Date.now(),
+        };
 
-        console.log(res)
-            .catch((error) => {
-                console.error(error);
-            });
+        try {
+            let res = await axios.post("http://localhost:8087/api/order", { ...data });
+            console.log(res.data);
+
+            // If COD, just confirm the order
+            if (formData.paymentMethod === "cod") {
+                alert("Order placed successfully!");
+                return;
+            }
+
+            // If online payment, redirect to the payment URL
+            if (res.data.url) {
+                window.location.href = res.data.url;  // Redirect to payment gateway
+            }
+        } catch (error) {
+            console.error("Error during payment:", error);
+        }
     };
+
     return (
         <div className='pt-5'>
-            <div className="pt-5">
-
+            <div className="pt-5 ">
                 <div className="container my-5 border p-4">
                     <h4 className=''>Brogan Boots</h4>
                     <div className="row">
-
                         <div className="col-md-6">
-                            <form action="">
+                            <form onSubmit={handlePayment}>
                                 <div className="py-2">
-                                    <label htmlFor="">Contact</label>
-                                    <input type="email" class="form-control" id="" placeholder="Enter email or mobile number" />
+                                    <label htmlFor="email">Email</label>
+                                    <input
+                                        type="email"
+                                        className="form-control"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="Enter email"
+                                        required
+                                    />
                                 </div>
-                                <div className='py-2'>
-                                    <input type='checkbox' />
-                                    <label htmlFor=""> Email me with news</label>
+                                <div className="py-2">
+                                    <label htmlFor="phoneNumber">Mobile Number</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="phoneNumber"
+                                        value={formData.phoneNumber}
+                                        onChange={handleChange}
+                                        placeholder="Enter mobile number"
+                                        required
+                                    />
                                 </div>
                                 <h4>Delivery</h4>
-                                <div className="py-2">
-
-                                    <input class="form-control" list="datalistOptions" id="exampleDataList" placeholder=" search country" />
-                                    <datalist id="datalistOptions">
-                                        <option value="India" />
-                                        <option value="New York" />
-                                        <option value="Seattle" />
-                                        <option value="Los Angeles" />
-                                        <option value="Chicago" />
-                                    </datalist>
-                                </div>
                                 <div className="row py-2">
-                                    <div className="col-6">
-
-                                        <input type="text" class="form-control" id="" placeholder="First Name" />
-                                    </div>
-                                    <div className="col-6">
-
-                                        <input type="text" class="form-control" id="" placeholder="Last name" />
+                                    <div className="col-12">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="fullName"
+                                            value={formData.fullName}
+                                            onChange={handleChange}
+                                            placeholder="Full Name"
+                                            required
+                                        />
                                     </div>
                                 </div>
                                 <div className="py-2">
-
-                                    <input type="text" class="form-control" id="" placeholder="Addresss" />
-                                </div>
-                                <div className="py-2">
-
-                                    <input type="text" class="form-control" id="" placeholder="Apartment suite etc." />
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleChange}
+                                        placeholder="Address"
+                                        required
+                                    />
                                 </div>
                                 <div className="row py-2">
-                                    <div className="col-4"> <input type="text" class="form-control" id="" placeholder="city" /></div>
-                                    <div className="col-4"><input class="form-control" list="data" id="exampleDataList" placeholder="state" />
+                                    <div className="col-4">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="city"
+                                            value={formData.city}
+                                            onChange={handleChange}
+                                            placeholder="City"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-4">
+                                        <input
+                                            className="form-control"
+                                            list="data"
+                                            name="state"
+                                            value={formData.state}
+                                            onChange={handleChange}
+                                            placeholder="State"
+                                            required
+                                        />
                                         <datalist id="data">
                                             <option value="mp" />
                                             <option value="cg" />
                                             <option value="mumbai" />
                                             <option value="Ap" />
-                                            <option value="Gujrat" />
-                                        </datalist></div>
-                                    <div className="col-4"> <input type="text" class="form-control" id="" placeholder="Pincode" /></div>
+                                            <option value="Gujarat" />
+                                        </datalist>
+                                    </div>
+                                    <div className="col-4">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="pinCode"
+                                            value={formData.pinCode}
+                                            onChange={handleChange}
+                                            placeholder="Pincode"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div className="py-2">
 
-                                    <input type="text" class="form-control" id="" placeholder="Phone" />
-                                </div>
-                                <div className='py-2'>
-                                    <input type='checkbox' />
-                                    <label htmlFor=""> save this information for next time</label>
-                                </div>
-                                <div className='py-2'>
-                                    <input type='checkbox' />
-                                    <label htmlFor=""> Text me with news annd offers</label>
-                                </div>
-                                <div className='py-2'>
-                                    <label htmlFor="">Shippping Method</label>
-                                    <input type="" class="form-control" id="" placeholder="Enter Your shipping addres" />
-                                </div>
                                 <h5>Payment</h5>
                                 <div className='py-2'>
-                                    <div >All transaction are safe and secure</div>
-                                    {/* <input type="radio" id="html" name="fav_language" value="HTML" />
-                                    <label htmlFor="html">HTML</label> */}
-
-
-                                    <input type="radio" value={true} name='invoice_customer' checked={true} />
-                                    <label htmlFor="as">Cah Free</label>
+                                    <div>All transactions are safe and secure</div>
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="online"
+                                        checked={formData.paymentMethod === "online"}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="online">Cash Free (Online Payment)</label>
                                     <br />
-                                    <input type="radio" id="cod" name="fav_language" value="CSS" />
-                                    <label htmlFor="cod">Cash on delivery</label><br />
-
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="cod"
+                                        checked={formData.paymentMethod === "cod"}
+                                        onChange={handleChange}
+                                    />
+                                    <label htmlFor="cod">Cash on Delivery</label>
                                 </div>
-                                <h5>Billing Address</h5>
-                                <div className='py-2'>
-                                    <input type="radio" value="" name='invoice_customer' id='add' />
-                                    <label htmlFor="add">Same as shipping address</label>
-                                    <br />
-                                    <input type="radio" id="add2" name="fav_language" value="CSS" />
-                                    <label htmlFor="add2">Use defferent billing address</label><br />
-
+                                <div className="d-flex justify-content-between py-2 fw-bold">
+                                    <span>Total</span>
+                                    <span>{displayINRCurrency(totalPrice)}</span>
                                 </div>
-
+                    
+                                <button className='btn bg-color btn-primary w-100'>PAY NOW</button>
                             </form>
                         </div>
-
-                        <div className="col-md-6 dflex">
-                            <div className="m-2">
-                                <img
-                                    className="img-fluid cart-img"
-                                    src=""
-                                    alt=""
-                                />
-                            </div>
+                        <div className="col-md-6">
+                            {/* Product Details */}
                             <div className="">
-                                <div className="d-flex justify-content-between">
-                                    <div>name</div>
-                                </div>
-                                <div className="text-secondary">size : </div>
-                                <div className="text-secondary">
-                                    category :
-                                </div>
+                                {loading
+                                  ? <div>Loading...</div>
+                                  : data.map((product) => {
+                                      return (
+                                        <div
+                                          className="d-flex"
+                                          key={product?._id}
+                                        >
+                                          <div className="m-2">
+                                            <img
+                                              className="img-fluid cart-img"
+                                              src={product?.productId?.productImage[0]}
+                                              alt={product?.productId?.productName}
+                                            />
+                                          </div>
+                                          <div className="m-2">
+                                            <h5>{product?.productId?.productName}</h5>
+                                            <p>Price: {displayINRCurrency(product?.productId?.sellingPrice)}</p>
+                                            <div className="d-flex align-items-center">
+                                              <button
+                                                  className="btn minus border-0"
+                                                  onClick={() => decreaseQty(product?._id, product.quantity)}
+                                              >
+                                                  <span className="minus-circle">
+                                                      <span className="minus-sign">-</span>
+                                                  </span>
+                                              </button>
+                                              <span>{product?.quantity}</span>
+                                              <button
+                                                  className="btn plus border-0"
+                                                  onClick={() => increaseQty(product?._id)}
+                                              >
+                                                  <span className="plus-circle">
+                                                      <span className="plus-sign">+</span>
+                                                  </span>
+                                              </button>
+                                              <button
+                                                  className="btn btn-danger ms-2"
+                                                  onClick={() => deleteCartProduct(product?._id)}
+                                              >
+                                                  Remove
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                  })}
                             </div>
-
-                            <form action="" onSubmit={handlePayment}>
-                            <div className="d-flex gap-4 py-2">
-                                <input type="text" class="form-control" id="" placeholder="discount code or gift card" />
-                                <button className='btn bg-color btn-primary'>Apply</button>
-                            </div>
-                            <div className="d-flex justify-content-between py-2">
-                                <span>SUbtotal</span>
-                                <span>10090</span>
-                            </div>
-                            <div className="d-flex justify-content-between py-2">
-                                <span>Shipping</span>
-                                <span>Enter shipping eddress</span>
-                            </div>
-                            <div className="d-flex justify-content-between py-2 fw-bold">
-                                <span >Total</span>
-                                <span>34673</span>
-                            </div>
-                            <div className="text-secondary my-2">incluiding in 24 rs taxes</div>
-                            <button className='btn bg-color btn-primary w-100'>PAY NOW</button>
-                            </form>
-                           
                         </div>
-
                     </div>
-
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Payment
+export default Payment;
