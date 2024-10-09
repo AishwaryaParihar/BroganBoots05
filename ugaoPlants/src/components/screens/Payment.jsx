@@ -116,8 +116,8 @@ const Payment = () => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
-
-        const data = {
+    
+        const paymentData = {  // Renamed from data to paymentData
             ...formData,
             amount: totalPrice,  // Use the total calculated price
             items: data.map(product => ({
@@ -128,17 +128,17 @@ const Payment = () => {
             MUID: "MUID" + Date.now(),
             transactionId: "T" + Date.now(),
         };
-
+    
         try {
-            let res = await axios.post("http://localhost:8087/api/order", { ...data });
+            let res = await axios.post("http://localhost:8087/api/order", { ...paymentData });
             console.log(res.data);
-
+    
             // If COD, just confirm the order
             if (formData.paymentMethod === "cod") {
                 alert("Order placed successfully!");
                 return;
             }
-
+    
             // If online payment, redirect to the payment URL
             if (res.data.url) {
                 window.location.href = res.data.url;  // Redirect to payment gateway
@@ -147,6 +147,9 @@ const Payment = () => {
             console.error("Error during payment:", error);
         }
     };
+    
+
+    
 
     return (
         <div className='pt-5'>
@@ -155,6 +158,60 @@ const Payment = () => {
                     <h4 className=''>Brogan Boots</h4>
                     <div className="row">
                         <div className="col-md-6">
+                            
+                            <div className="">
+                                {loading
+                                  ? <div>Loading...</div>
+                                  : data.map((product) => {
+                                      return (
+                                        <div
+                                          className="d-flex"
+                                          key={product?._id}
+                                        >
+                                          <div className="m-2">
+                                            <img
+                                              className="img-fluid cart-img"
+                                              src={product?.productId?.productImage[0]}
+                                              alt={product?.productId?.productName}
+                                            />
+                                          </div>
+                                          <div className="m-2">
+                                            <h5>{product?.productId?.productName}</h5>
+                                            <p>Price: {displayINRCurrency(product?.productId?.sellingPrice)}</p>
+                                            <div className="text-secondary">size : {product?.productId?.size}</div>
+                                            <div className="d-flex align-items-center">
+                                              <button
+                                                  className="btn minus border-0"
+                                                  onClick={() => decreaseQty(product?._id, product.quantity)}
+                                              >
+                                                  <span className="minus-circle">
+                                                      <span className="minus-sign">-</span>
+                                                  </span>
+                                              </button>
+                                              <span>{product?.quantity}</span>
+                                              <button
+                                                  className="btn plus border-0"
+                                                  onClick={() => increaseQty(product?._id)}
+                                              >
+                                                  <span className="plus-circle">
+                                                      <span className="plus-sign">+</span>
+                                                  </span>
+                                              </button>
+                                              <button
+                                                  className="btn btn-danger ms-2"
+                                                  onClick={() => deleteCartProduct(product?._id)}
+                                              >
+                                                  Remove
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                  })}
+                            </div>
+                        </div>
+                        <div className="col-md-6">
+                            {/* Product Details */}
                             <form onSubmit={handlePayment}>
                                 <div className="py-2">
                                     <label htmlFor="email">Email</label>
@@ -276,58 +333,6 @@ const Payment = () => {
                     
                                 <button className='btn bg-color btn-primary w-100'>PAY NOW</button>
                             </form>
-                        </div>
-                        <div className="col-md-6">
-                            {/* Product Details */}
-                            <div className="">
-                                {loading
-                                  ? <div>Loading...</div>
-                                  : data.map((product) => {
-                                      return (
-                                        <div
-                                          className="d-flex"
-                                          key={product?._id}
-                                        >
-                                          <div className="m-2">
-                                            <img
-                                              className="img-fluid cart-img"
-                                              src={product?.productId?.productImage[0]}
-                                              alt={product?.productId?.productName}
-                                            />
-                                          </div>
-                                          <div className="m-2">
-                                            <h5>{product?.productId?.productName}</h5>
-                                            <p>Price: {displayINRCurrency(product?.productId?.sellingPrice)}</p>
-                                            <div className="d-flex align-items-center">
-                                              <button
-                                                  className="btn minus border-0"
-                                                  onClick={() => decreaseQty(product?._id, product.quantity)}
-                                              >
-                                                  <span className="minus-circle">
-                                                      <span className="minus-sign">-</span>
-                                                  </span>
-                                              </button>
-                                              <span>{product?.quantity}</span>
-                                              <button
-                                                  className="btn plus border-0"
-                                                  onClick={() => increaseQty(product?._id)}
-                                              >
-                                                  <span className="plus-circle">
-                                                      <span className="plus-sign">+</span>
-                                                  </span>
-                                              </button>
-                                              <button
-                                                  className="btn btn-danger ms-2"
-                                                  onClick={() => deleteCartProduct(product?._id)}
-                                              >
-                                                  Remove
-                                              </button>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                  })}
-                            </div>
                         </div>
                     </div>
                 </div>
