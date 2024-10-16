@@ -67,8 +67,8 @@ function Nav() {
   return (
     <div>
       <section>
-        <nav className="navbar bgNav navbar-expand-lg fixed-top " tabIndex="3">
-          <div className="container-fluid container-xl py-3 flex-nowrap">
+        <nav className="navbar bgNav navbar-expand-lg fixed-top shadow-sm" tabIndex="3">
+          <div className="container-fluid container-xl py-3 flex-nowrap ">
             <button
               className="navbar-toggler border-0"
               type="button"
