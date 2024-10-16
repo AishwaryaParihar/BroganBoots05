@@ -16,7 +16,7 @@ const Payment = () => {
   const handlePayment = async (e) => {
     e.preventDefault();
 
-    let res = await axios.post("http://localhost:8087/api/order", { ...data })
+    let res = await axios.post("https://broganboots02.onrender.com/api/order", { ...data })
       .then((res) => {
         window.location.href = res.data.url
         if (res.data && res.data.data.instrumentResponse.redirectInfo.url) {

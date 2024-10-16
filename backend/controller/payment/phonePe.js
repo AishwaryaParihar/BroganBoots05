@@ -26,7 +26,7 @@ const phonePePayment = async (req, res) => {
       // redirectUrl: `${FRONTEND_URL}`,
       redirectUrl: `${FRONTEND_URL}/api/payment-status/?id=${transactionId}`,
       redirectMode: "POST",
-      callbackUrl: "http://localhost:5173/api/payment-status",  // Your production callback URL
+      callbackUrl: "https://broganboots02.onrender.com/api/payment-status",  // Your production callback URL
       mobileNumber: phoneNumber,
       paymentInstrument: {
         type: "PAY_PAGE",
