@@ -11,11 +11,12 @@ const path = require('path');
 
 app.use(
   cors({
-    origin: [`${FRONTEND_URL}`],
+    origin: process.env.FRONTEND_URL, // Ensure this is correctly set
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   })
 );
+
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // app.use(cors({
 //   origin: process.env.FRONTEND_URL,
