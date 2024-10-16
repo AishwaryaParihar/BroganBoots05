@@ -17,6 +17,15 @@ app.use(
   })
 );
 
+// app.use(
+//   cors({
+//     origin: [`${FRONTEND_URL}`],
+//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//     credentials: true,
+//   })
+// );
+
+
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // app.use(cors({
 //   origin: process.env.FRONTEND_URL,
