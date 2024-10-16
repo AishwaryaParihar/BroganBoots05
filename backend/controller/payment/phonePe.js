@@ -1,53 +1,51 @@
 const axios = require("axios");
-const FRONTEND_URL = process.env.FRONTEND_URL
+const FRONTEND_URL = process.env.FRONTEND_URL;
 require("dotenv").config();
 const crypto = require("crypto");
 
 const phonePePayment = async (req, res) => {
   try {
-    const merchant_id = "BROGANBOOTSUAT";
-    const salt_key = "94f2c0cf-c52f-4c7a-ab6b-24414c8ff7d3";
+    const {
+      transactionId,
+      MUID,
+      amount,
+      fullName,
+      phoneNumber,
+    } = req.body;
 
-    const merchantTransactionId = req.body.transactionId;
-    // const data = {
-    //   merchantId: merchant_id,
-    //   merchantTransactionId: merchantTransactionId,
-    //   merchantUserId: req.body.MUID,
-    //   name: req.body.name,
-    //   amount: req.body.amount * 100,
-    //   redirectUrl: `http://localhost:8081/api/status/?id=${merchantTransactionId}`,
-    //   redirectMode: "POST",
-    //   mobileNumber: req.body.number,
-    //   paymentInstrument: {
-    //     type: "PAY_PAGE",
-    //   },
-    // };
+    const merchant_id = process.env.MERCHANT_ID;
+    const salt_key = process.env.SALT_KEY;
 
+    console.log("data", req.body);
     const data = {
       merchantId: merchant_id,
-      merchantTransactionId: merchantTransactionId,
-      merchantUserId: req.body.MUID,
-      amount: req.body.amount * 100,
-      name: "anuj",
-      redirectUrl: `${FRONTEND_URL}/api/status/?id=${merchantTransactionId}`,
+      merchantTransactionId: transactionId,
+      merchantUserId: MUID,
+      amount: amount * 100, // Amount in paise
+      name: fullName,
+      // redirectUrl: `${FRONTEND_URL}`,
+      redirectUrl: `${FRONTEND_URL}/api/payment-status/?id=${transactionId}`,
       redirectMode: "POST",
-      callbackUrl: "https://webhook.site/callback-url",
-      mobileNumber: "9999999999",
+      callbackUrl: "https://broganboots02.onrender.com/api/payment-status",  // Your production callback URL
+      mobileNumber: phoneNumber,
       paymentInstrument: {
-        type: "PAY_PAGE", 
+        type: "PAY_PAGE",
       },
     };
 
+    // Logging for debugging
     console.log(data);
 
+    // Preparing payload
     const payload = JSON.stringify(data);
-    const payloadMain = btoa(payload);
+    const payloadMain = Buffer.from(payload).toString('base64');
     const keyIndex = 1;
     const string = payloadMain + "/pg/v1/pay" + salt_key;
     const sha256 = crypto.createHash("sha256").update(string).digest("hex");
     const checksum = sha256 + "###" + keyIndex;
-    const prod_URL =
-      "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
+
+    // Production URL for PhonePe
+    const prod_URL = "https://api.phonepe.com/apis/hermes/pg/v1/pay";
 
     const options = {
       method: "POST",
@@ -61,21 +59,14 @@ const phonePePayment = async (req, res) => {
       },
     };
 
-    try {
-      const response = await axios.request(options);
-      // console.log(response.data.data)
-      console.log(response.data.data.instrumentResponse.redirectInfo);
-      return res.json(response.data.data.instrumentResponse.redirectInfo);
-    } catch (error) {
-      // console.log(error);
-      return res.status(500).json({
-        message: error.message,
-        success: false,
-      });
-    }
+    // Make the API call to PhonePe
+    const response = await axios.request(options);
+    console.log(response.data.data.instrumentResponse.redirectInfo);
+    return res.json(response.data.data.instrumentResponse.redirectInfo);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    console.error("Error during payment processing:", error.response ? error.response.data : error.message);
+    return res.status(500).json({
+      message: "Payment processing failed. Please try again later.",
       success: false,
     });
   }
