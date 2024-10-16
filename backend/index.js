@@ -9,21 +9,15 @@ const FRONTEND_URL = process.env.FRONTEND_URL
 const app = express();
 const path = require('path');
 
+
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // Ensure this is correctly set
+    origin: [`${FRONTEND_URL}`],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   })
 );
-
-// app.use(
-//   cors({
-//     origin: [`${FRONTEND_URL}`],
-//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//     credentials: true,
-//   })
-// );
 
 
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
