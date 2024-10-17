@@ -9,6 +9,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL
 const app = express();
 const path = require('path');
 
+
+
 app.use(
   cors({
     origin: [`${FRONTEND_URL}`],
@@ -16,15 +18,6 @@ app.use(
     credentials: true,
   })
 );
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-// app.use(cors({
-//   origin: process.env.FRONTEND_URL,
-//   credentials: true
-// }));
-
-
-
-
 
 
 app.use(express.json());
