@@ -45,7 +45,7 @@ const PORT = 8087 || process.env.PORT;
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log("connect to db");
-    console.log("Server is running");
+    console.log("Server is running", PORT);
   });
 });
 

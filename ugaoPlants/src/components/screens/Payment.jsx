@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Context from '../../context';
 import SummaryApi from '../../common/Index';
 import displayINRCurrency from '../../helper/displayCurrency';
-import { incremented, decremented } from '../../store/CounterSlice'; // Make sure you import these actions
+import { incremented, decremented } from '../../store/CounterSlice';
 
 const Payment = () => {
     const [data, setData] = useState([]);
@@ -14,80 +14,86 @@ const Payment = () => {
     const dispatch = useDispatch();
     const countProduct = useSelector((state) => state.counter.value);
   
+    // Fetch cart data from the API
     const fetchData = async () => {
-      const response = await fetch(SummaryApi.addToCartProductView.url, {
-        method: SummaryApi.addToCartProductView.method,
-        credentials: "include",
-        headers: {
-          "content-type": "application/json",
-        },
-      });
-  
-      const responseData = await response.json();
-  
-      if (responseData.success) {
-        setData(responseData.data);
-      }
+        const response = await fetch(SummaryApi.addToCartProductView.url, {
+            method: SummaryApi.addToCartProductView.method,
+            credentials: "include",
+            headers: {
+                "content-type": "application/json",
+            },
+        });
+
+        const responseData = await response.json();
+
+        if (responseData.success) {
+            setData(responseData.data);
+        }
     };
   
+    // Handle loading state
     const handleLoading = async () => {
-      setLoading(true);
-      await fetchData();
-      setLoading(false);
+        setLoading(true);
+        await fetchData();
+        setLoading(false);
     };
   
     useEffect(() => {
-      handleLoading();
+        handleLoading();
     }, []);
   
+    // Increase product quantity
     const increaseQty = async (id) => {
-      dispatch(incremented(id));
-      const response = await fetch(SummaryApi.updateCartProduct.url, {
-        method: SummaryApi.updateCartProduct.method,
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ _id: id, quantity: countProduct + 1 }),
-      });
-      const responseData = await response.json();
-      if (responseData.success) {
-        fetchData();
-      }
-    };
-  
-    const decreaseQty = async (id, currentQty) => {
-      if (currentQty > 1) {
-        dispatch(decremented(id));
+        dispatch(incremented(id));
         const response = await fetch(SummaryApi.updateCartProduct.url, {
-          method: SummaryApi.updateCartProduct.method,
-          credentials: "include",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ _id: id, quantity: currentQty - 1 }),
+            method: SummaryApi.updateCartProduct.method,
+            credentials: "include",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ _id: id, quantity: countProduct + 1 }),
         });
         const responseData = await response.json();
         if (responseData.success) {
-          fetchData();
+            fetchData();
         }
-      }
     };
   
+    // Decrease product quantity
+    const decreaseQty = async (id, currentQty) => {
+        if (currentQty > 1) {
+            dispatch(decremented(id));
+            const response = await fetch(SummaryApi.updateCartProduct.url, {
+                method: SummaryApi.updateCartProduct.method,
+                credentials: "include",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ _id: id, quantity: currentQty - 1 }),
+            });
+            const responseData = await response.json();
+            if (responseData.success) {
+                fetchData();
+            }
+        }
+    };
+  
+    // Delete product from cart
     const deleteCartProduct = async (id) => {
-      const response = await fetch(SummaryApi.deleteCartProduct.url, {
-        method: SummaryApi.deleteCartProduct.method,
-        credentials: "include",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ _id: id }),
-      });
-  
-      const responseData = await response.json();
-  
-      if (responseData.success) {
-        fetchData();
-        context2.fetchUserAddToCart();
-      }
+        const response = await fetch(SummaryApi.deleteCartProduct.url, {
+            method: SummaryApi.deleteCartProduct.method,
+            credentials: "include",
+            headers: {
+                "content-type": "application/json",
+            },
+            body: JSON.stringify({ _id: id }),
+        });
+
+        const responseData = await response.json();
+
+        if (responseData.success) {
+            fetchData();
+            context2.fetchUserAddToCart();
+        }
     };
   
+    // Calculate total quantity and price
     const totalQty = data.reduce((previousValue, currentValue) => previousValue + currentValue.quantity, 0);
     const totalPrice = data.reduce((preve, curr) => preve + curr.quantity * curr?.productId?.sellingPrice, 0);
   
@@ -114,31 +120,35 @@ const Payment = () => {
         });
     };
 
+    // Handle payment submission
     const handlePayment = async (e) => {
         e.preventDefault();
-
-        const data = {
+    
+        // Generate a unique transaction ID
+        const transaction_id = `T${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+        const paymentData = {
             ...formData,
-            amount: totalPrice,  // Use the total calculated price
+            amount: totalPrice,
             items: data.map(product => ({
                 productName: product.productId.productName,
                 qty: product.quantity,
                 price: product.productId.sellingPrice
-            })),  // Create item details based on actual products
+            })),
             MUID: "MUID" + Date.now(),
-            transactionId: "T" + Date.now(),
+            transactionId: transaction_id, // Use the generated transaction ID here
         };
-
+    
         try {
-            let res = await axios.post("http://localhost:8087/api/order", { ...data });
+            let res = await axios.post("http://localhost:8087/api/order", { ...paymentData });
             console.log(res.data);
-
+    
             // If COD, just confirm the order
             if (formData.paymentMethod === "cod") {
                 alert("Order placed successfully!");
                 return;
             }
-
+    
             // If online payment, redirect to the payment URL
             if (res.data.url) {
                 window.location.href = res.data.url;  // Redirect to payment gateway
@@ -147,14 +157,64 @@ const Payment = () => {
             console.error("Error during payment:", error);
         }
     };
-
+    
+    
     return (
         <div className='pt-5'>
-            <div className="pt-5 ">
+            <div className="pt-5">
                 <div className="container my-5 border p-4">
-                    <h4 className=''>Brogan Boots</h4>
+                    <h4>Brogan Boots</h4>
                     <div className="row">
                         <div className="col-md-6">
+                            <div>
+                                {loading
+                                    ? <div>Loading...</div>
+                                    : data.map((product) => {
+                                        return (
+                                            <div className="d-flex" key={product?._id}>
+                                                <div className="m-2">
+                                                    <img
+                                                        className="img-fluid cart-img"
+                                                        src={product?.productId?.productImage[0]}
+                                                        alt={product?.productId?.productName}
+                                                    />
+                                                </div>
+                                                <div className="m-2">
+                                                    <h5>{product?.productId?.productName}</h5>
+                                                    <p>Price: {displayINRCurrency(product?.productId?.sellingPrice)}</p>
+                                                    <div className="d-flex align-items-center">
+                                                        <button
+                                                            className="btn minus border-0"
+                                                            onClick={() => decreaseQty(product?._id, product.quantity)}
+                                                        >
+                                                            <span className="minus-circle">
+                                                                <span className="minus-sign">-</span>
+                                                            </span>
+                                                        </button>
+                                                        <span>{product?.quantity}</span>
+                                                        <button
+                                                            className="btn plus border-0"
+                                                            onClick={() => increaseQty(product?._id)}
+                                                        >
+                                                            <span className="plus-circle">
+                                                                <span className="plus-sign">+</span>
+                                                            </span>
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-danger ms-2"
+                                                            onClick={() => deleteCartProduct(product?._id)}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                        <div className="col-md-6">
+                            {/* Product Details */}
                             <form onSubmit={handlePayment}>
                                 <div className="py-2">
                                     <label htmlFor="email">Email</label>
@@ -242,92 +302,27 @@ const Payment = () => {
                                             name="pinCode"
                                             value={formData.pinCode}
                                             onChange={handleChange}
-                                            placeholder="Pincode"
+                                            placeholder="Pin Code"
                                             required
                                         />
                                     </div>
                                 </div>
-
-                                <h5>Payment</h5>
-                                <div className='py-2'>
-                                    <div>All transactions are safe and secure</div>
-                                    <input
-                                        type="radio"
+                                <div className="py-2">
+                                    <label htmlFor="paymentMethod">Payment Method</label>
+                                    <select
+                                        className="form-select"
                                         name="paymentMethod"
-                                        value="online"
-                                        checked={formData.paymentMethod === "online"}
+                                        value={formData.paymentMethod}
                                         onChange={handleChange}
-                                    />
-                                    <label htmlFor="online">Cash Free (Online Payment)</label>
-                                    <br />
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="cod"
-                                        checked={formData.paymentMethod === "cod"}
-                                        onChange={handleChange}
-                                    />
-                                    <label htmlFor="cod">Cash on Delivery</label>
+                                        required
+                                    >
+                                        <option value="online">Online</option>
+                                        <option value="cod">Cash on Delivery</option>
+                                    </select>
                                 </div>
-                                <div className="d-flex justify-content-between py-2 fw-bold">
-                                    <span>Total</span>
-                                    <span>{displayINRCurrency(totalPrice)}</span>
-                                </div>
-                    
-                                <button className='btn bg-color btn-primary w-100'>PAY NOW</button>
+                                <h4 className="my-3">Total Amount: {displayINRCurrency(totalPrice)}</h4>
+                                <button className="btn btn-primary" type="submit">Confirm Payment</button>
                             </form>
-                        </div>
-                        <div className="col-md-6">
-                            {/* Product Details */}
-                            <div className="">
-                                {loading
-                                  ? <div>Loading...</div>
-                                  : data.map((product) => {
-                                      return (
-                                        <div
-                                          className="d-flex"
-                                          key={product?._id}
-                                        >
-                                          <div className="m-2">
-                                            <img
-                                              className="img-fluid cart-img"
-                                              src={product?.productId?.productImage[0]}
-                                              alt={product?.productId?.productName}
-                                            />
-                                          </div>
-                                          <div className="m-2">
-                                            <h5>{product?.productId?.productName}</h5>
-                                            <p>Price: {displayINRCurrency(product?.productId?.sellingPrice)}</p>
-                                            <div className="d-flex align-items-center">
-                                              <button
-                                                  className="btn minus border-0"
-                                                  onClick={() => decreaseQty(product?._id, product.quantity)}
-                                              >
-                                                  <span className="minus-circle">
-                                                      <span className="minus-sign">-</span>
-                                                  </span>
-                                              </button>
-                                              <span>{product?.quantity}</span>
-                                              <button
-                                                  className="btn plus border-0"
-                                                  onClick={() => increaseQty(product?._id)}
-                                              >
-                                                  <span className="plus-circle">
-                                                      <span className="plus-sign">+</span>
-                                                  </span>
-                                              </button>
-                                              <button
-                                                  className="btn btn-danger ms-2"
-                                                  onClick={() => deleteCartProduct(product?._id)}
-                                              >
-                                                  Remove
-                                              </button>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                  })}
-                            </div>
                         </div>
                     </div>
                 </div>
