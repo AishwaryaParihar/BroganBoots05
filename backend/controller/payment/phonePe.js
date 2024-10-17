@@ -1,84 +1,91 @@
 const axios = require("axios");
-const FRONTEND_URL = process.env.FRONTEND_URL
-require("dotenv").config();
 const crypto = require("crypto");
+const transactiondetails = require("../../models/transactionModel");
+require("dotenv").config();
 
 const phonePePayment = async (req, res) => {
-  try {
-    const merchant_id = "BROGANBOOTSUAT";
-    const salt_key = "94f2c0cf-c52f-4c7a-ab6b-24414c8ff7d3";
-
-    const merchantTransactionId = req.body.transactionId;
-    // const data = {
-    //   merchantId: merchant_id,
-    //   merchantTransactionId: merchantTransactionId,
-    //   merchantUserId: req.body.MUID,
-    //   name: req.body.name,
-    //   amount: req.body.amount * 100,
-    //   redirectUrl: `http://localhost:8081/api/status/?id=${merchantTransactionId}`,
-    //   redirectMode: "POST",
-    //   mobileNumber: req.body.number,
-    //   paymentInstrument: {
-    //     type: "PAY_PAGE",
-    //   },
-    // };
-
-    const data = {
-      merchantId: merchant_id,
-      merchantTransactionId: merchantTransactionId,
-      merchantUserId: req.body.MUID,
-      amount: req.body.amount * 100,
-      name: "anuj",
-      redirectUrl: `${FRONTEND_URL}/api/status/?id=${merchantTransactionId}`,
-      redirectMode: "POST",
-      callbackUrl: "https://webhook.site/callback-url",
-      mobileNumber: "9999999999",
-      paymentInstrument: {
-        type: "PAY_PAGE", 
-      },
-    };
-
-    console.log(data);
-
-    const payload = JSON.stringify(data);
-    const payloadMain = btoa(payload);
-    const keyIndex = 1;
-    const string = payloadMain + "/pg/v1/pay" + salt_key;
-    const sha256 = crypto.createHash("sha256").update(string).digest("hex");
-    const checksum = sha256 + "###" + keyIndex;
-    const prod_URL =
-      "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
-
-    const options = {
-      method: "POST",
-      url: prod_URL,
-      headers: {
-        "Content-Type": "application/json",
-        "X-VERIFY": checksum,
-      },
-      data: {
-        request: payloadMain,
-      },
-    };
-
     try {
-      const response = await axios.request(options);
-      // console.log(response.data.data)
-      console.log(response.data.data.instrumentResponse.redirectInfo);
-      return res.json(response.data.data.instrumentResponse.redirectInfo);
+        const { transactionId, MUID, amount, name, email, address, city, state, pinCode, paymentMethod, transaction_id, paymentId, number, items } = req.body;
+
+        // Ensure all required fields are provided
+        if (!transaction_id ) {
+            return res.status(400).json({ message: "All fields are required", success: false });
+        }
+
+        const merchant_id = process.env.MERCHANT_ID;
+        const salt_key = process.env.SALT_KEY;
+        const frontendUrl = process.env.FRONTEND_URL;
+
+        const data = {
+            merchantId: merchant_id,
+            merchantTransactionId: transactionId,
+            merchantUserId: MUID,
+            amount: amount * 100, // Amount in paise
+            name: name,
+            redirectUrl: `${frontendUrl}/api/status/?id=${transaction_id}`,
+            redirectMode: "POST",
+            callbackUrl: "https://webhook.site/callback-url", // Change as needed
+            mobileNumber: number,
+            paymentInstrument: {
+                type: "PAY_PAGE",
+            },
+        };
+
+        const payload = JSON.stringify(data);
+        const payloadMain = Buffer.from(payload).toString("base64");
+        const keyIndex = 1;
+        const string = payloadMain + "/pg/v1/pay" + salt_key;
+        const sha256 = crypto.createHash("sha256").update(string).digest("hex");
+        const checksum = sha256 + "###" + keyIndex;
+
+        const prod_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
+
+        const options = {
+            method: "POST",
+            url: prod_URL,
+            headers: {
+                "Content-Type": "application/json",
+                "X-VERIFY": checksum,
+            },
+            data: {
+                request: payloadMain,
+            },
+        };
+
+        const response = await axios.request(options);
+        const redirectInfo = response.data.data.instrumentResponse.redirectInfo;
+
+        // Save transaction data to MongoDB
+        const transactionData = {
+            fullName: name,
+            phoneNumber: number,
+            email: email,
+            address: address,
+            city: city,
+            state: state,
+            pinCode: pinCode,
+            paymentMethod: paymentMethod,
+            amount: amount,
+            items: items,
+            MUID: MUID,
+            transactionId: transactionId,
+            transaction_id: transaction_id, // Ensure this is included
+            created_at: new Date(),
+            merchant_id: merchant_id,
+            payment_id: paymentId // If this is needed
+        };
+console.log("abccccccc",transactionData)
+        const newTransaction = new transactiondetails(transactionData);
+        await newTransaction.save();
+
+        return res.json(redirectInfo); // Send the redirect URL to the frontend
     } catch (error) {
-      // console.log(error);
-      return res.status(500).json({
-        message: error.message,
-        success: false,
-      });
+        console.error(error);
+        return res.status(500).json({
+            message: error.message,
+            success: false,
+        });
     }
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-      success: false,
-    });
-  }
 };
 
 module.exports = phonePePayment;
