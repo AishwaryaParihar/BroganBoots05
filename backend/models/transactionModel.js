@@ -2,6 +2,13 @@ const mongoose = require("mongoose");
 
 const transactionModel = new mongoose.Schema(
     {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
         fullName: {
             type: String,
             trim: true,
@@ -57,10 +64,81 @@ const transactionModel = new mongoose.Schema(
             type: Number,
             min: 0,
             // Ensure it's required
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+=======
+
+        fullName: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+        },
+        phoneNumber: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+            minlength: 10,  // Minimum length for phone number
+            maxlength: 15,  // Maximum length for phone number
+        },
+        email: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+            lowercase: true,  // Store emails in lowercase
+            validate: {
+                validator: function(v) {
+                    return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(v);  // Basic email validation
+                },
+                message: props => `${props.value} is not a valid email!`
+            }
+        },
+        address: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+        },
+        city: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+        },
+        state: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+        },
+        pinCode: {
+            type: String,
+            required: true,  // Required field
+            trim: true,  // Remove extra spaces
+            minlength: 6,  // Minimum length for pin code
+            maxlength: 7,  // Maximum length for pin code
+        },
+        paymentMethod: {
+            type: String,
+            enum: ['online', 'cod'],  // Enum for payment methods
+            default: 'online',  // Default value
+        },
+        amount: {
+            type: Number,
+            required: true,  // Required field
+            min: 0,  // Amount cannot be negative
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
         },
         items: [{
             productName: {
                 type: String,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
                 trim: true,
     // Ensure it's required
             },
@@ -73,10 +151,37 @@ const transactionModel = new mongoose.Schema(
                 type: Number,
                 min: 0,
                // Ensure it's required
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+=======
+                required: true,  // Required field
+                trim: true,  // Remove extra spaces
+            },
+            qty: {
+                type: Number,
+                required: true,  // Required field
+                min: 1,  // Minimum quantity must be at least 1
+            },
+            price: {
+                type: Number,
+                required: true,  // Required field
+                min: 0,  // Price cannot be negative
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
             },
         }],
         MUID: {
             type: String,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
             
         },
         transactionId: {
@@ -95,6 +200,7 @@ const transactionModel = new mongoose.Schema(
             default: Date.now, // Automatically set the creation date
         },
         payment_id: String,
+<<<<<<< HEAD
     },
     {
         timestamps: true
@@ -103,3 +209,43 @@ const transactionModel = new mongoose.Schema(
 
 const transactiondetails = mongoose.model("transaction", transactionModel);
 module.exports = transactiondetails;
+=======
+<<<<<<< HEAD
+    },
+    {
+        timestamps: true
+    }
+);
+
+const transactiondetails = mongoose.model("transaction", transactionModel);
+module.exports = transactiondetails;
+=======
+    },
+    {
+        timestamps: true
+    }
+);
+
+const transactiondetails = mongoose.model("transaction", transactionModel);
+module.exports = transactiondetails;
+=======
+            required: true,  // Required field
+        },
+    transaction_id : {
+        type:String,
+        unique: true,
+    },
+    user_id:String,
+    murchant_id : String,
+    created_at : String,
+    product_id:String,
+    payment_id : String,
+},{
+    timestamps:true
+}
+)
+const transactiondetails=mongoose.model("transaction", transactionModel)
+module.exports = transactiondetails
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562

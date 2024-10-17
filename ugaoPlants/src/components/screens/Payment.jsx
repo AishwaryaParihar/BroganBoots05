@@ -124,10 +124,26 @@ const Payment = () => {
     const handlePayment = async (e) => {
         e.preventDefault();
     
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
         // Generate a unique transaction ID
         const transaction_id = `T${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
         const paymentData = {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+=======
+        const paymentData = {  // Renamed from data to paymentData
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
             ...formData,
             amount: totalPrice,
             items: data.map(product => ({
@@ -140,7 +156,19 @@ const Payment = () => {
         };
     
         try {
+<<<<<<< HEAD
             let res = await axios.post("http://localhost:8087/api/order", { ...paymentData });
+=======
+<<<<<<< HEAD
+            let res = await axios.post("http://localhost:8087/api/order", { ...paymentData });
+=======
+<<<<<<< HEAD
+            let res = await axios.post("http://localhost:8087/api/order", { ...paymentData });
+=======
+            let res = await axios.post("https://broganboots02.onrender.com/api/order", { ...paymentData });
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
             console.log(res.data);
     
             // If COD, just confirm the order
@@ -158,7 +186,21 @@ const Payment = () => {
         }
     };
     
+<<<<<<< HEAD
     
+=======
+<<<<<<< HEAD
+    
+=======
+<<<<<<< HEAD
+    
+=======
+
+    
+
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
     return (
         <div className='pt-5'>
             <div className="pt-5">
@@ -166,6 +208,13 @@ const Payment = () => {
                     <h4>Brogan Boots</h4>
                     <div className="row">
                         <div className="col-md-6">
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
                             <div>
                                 {loading
                                     ? <div>Loading...</div>
@@ -211,6 +260,64 @@ const Payment = () => {
                                             </div>
                                         );
                                     })}
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+=======
+                            
+                            <div className="">
+                                {loading
+                                  ? <div>Loading...</div>
+                                  : data.map((product) => {
+                                      return (
+                                        <div
+                                          className="d-flex"
+                                          key={product?._id}
+                                        >
+                                          <div className="m-2">
+                                            <img
+                                              className="img-fluid cart-img"
+                                              src={product?.productId?.productImage[0]}
+                                              alt={product?.productId?.productName}
+                                            />
+                                          </div>
+                                          <div className="m-2">
+                                            <h5>{product?.productId?.productName}</h5>
+                                            <p>Price: {displayINRCurrency(product?.productId?.sellingPrice)}</p>
+                                            <div className="text-secondary">size : {product?.productId?.size}</div>
+                                            <div className="d-flex align-items-center">
+                                              <button
+                                                  className="btn minus border-0"
+                                                  onClick={() => decreaseQty(product?._id, product.quantity)}
+                                              >
+                                                  <span className="minus-circle">
+                                                      <span className="minus-sign">-</span>
+                                                  </span>
+                                              </button>
+                                              <span>{product?.quantity}</span>
+                                              <button
+                                                  className="btn plus border-0"
+                                                  onClick={() => increaseQty(product?._id)}
+                                              >
+                                                  <span className="plus-circle">
+                                                      <span className="plus-sign">+</span>
+                                                  </span>
+                                              </button>
+                                              <button
+                                                  className="btn btn-danger ms-2"
+                                                  onClick={() => deleteCartProduct(product?._id)}
+                                              >
+                                                  Remove
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                  })}
+>>>>>>> ebbef1848e7e985b990a5a3f65ee42e73d455b47
+>>>>>>> 9b50cded24ea3b8b749d48ba36e2b37bdc5ef956
+>>>>>>> 3f4afe839ee3eaa51f847468b5e3360dad2f9562
                             </div>
                         </div>
                         <div className="col-md-6">
